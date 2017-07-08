@@ -1,16 +1,19 @@
 package prathap.fingerprint;
 
+import android.Manifest;
 import android.app.KeyguardManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -258,6 +261,11 @@ public class LoginActivity extends AppCompatActivity {
                if (!fingerprintManager.isHardwareDetected()) {
                    // Update the UI with a message
                    Toast.makeText(this, "Fingerprint hardware not detected", Toast.LENGTH_SHORT).show();
+                   return false;
+               }
+               if (ActivityCompat.checkSelfPermission(this, Manifest.permission.USE_FINGERPRINT) != PackageManager.PERMISSION_GRANTED) {
+                   // If your app doesn't have this permission, then display the following text//
+                   Toast.makeText(this, "Please enable the fingerprint permission", Toast.LENGTH_SHORT).show();
                    return false;
                }
 
