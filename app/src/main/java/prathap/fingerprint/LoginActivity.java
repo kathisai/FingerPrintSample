@@ -58,7 +58,6 @@ public class LoginActivity extends AppCompatActivity {
     KeyGenerator keyGenerator;
     KeyStore keyStore;
     String KEY_NAME = "Secret Key";
-    private FingerprintManager.CryptoObject cryptoObject;
     private SharedPreferences mSharedPreferences;
     private static final String DIALOG_FRAGMENT_TAG = "myFragment";
 
@@ -71,19 +70,10 @@ public class LoginActivity extends AppCompatActivity {
         setSupportActionBar(mToolbar);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-
-        if (!checkFinger()) {
-            Toast.makeText(this, "Finger print is not support for your device ", Toast.LENGTH_SHORT).show();
-        }
-        else {
+        if (checkFinger()) {
             // We are ready to set up the cipher and the key
             try {
                 generateKey();
-                Cipher cipher = generateCipher();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    cryptoObject =
-                            new FingerprintManager.CryptoObject(cipher);
-                }
             } catch (Exception fpe) {
                 // Handle exception
             }
@@ -269,7 +259,7 @@ public class LoginActivity extends AppCompatActivity {
            if(isVersionSupport()) {
                if (!fingerprintManager.isHardwareDetected()) {
                    // Update the UI with a message
-                   Toast.makeText(this, "Fingerprint authentication not supported", Toast.LENGTH_SHORT).show();
+                   Toast.makeText(this, "Fingerprint hardware not detected", Toast.LENGTH_SHORT).show();
                    return false;
                }
 
