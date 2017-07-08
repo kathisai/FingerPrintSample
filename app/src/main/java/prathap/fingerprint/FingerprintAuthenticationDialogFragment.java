@@ -60,6 +60,12 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     private LoginActivity mActivity;
 
     private InputMethodManager mInputMethodManager;
+    private final Runnable mShowKeyboardRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mInputMethodManager.showSoftInput(mPassword, 0);
+        }
+    };
     private SharedPreferences mSharedPreferences;
 
     @Override
@@ -201,13 +207,6 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         return password.length() > 0;
     }
 
-    private final Runnable mShowKeyboardRunnable = new Runnable() {
-        @Override
-        public void run() {
-            mInputMethodManager.showSoftInput(mPassword, 0);
-        }
-    };
-
     private void updateStage() {
         switch (mStage) {
             case FINGERPRINT:
@@ -245,7 +244,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     public void onAuthenticated() {
         // Callback from FingerprintUiHelper. Let the activity know that authentication was
         // successful.
-//        mActivity.onPurchased(true /* withFingerprint */, mCryptoObject);
+        mActivity.onAuthenticated();
         dismiss();
     }
 

@@ -3,6 +3,7 @@ package prathap.fingerprint;
 import android.app.KeyguardManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
@@ -14,8 +15,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-
-import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -43,7 +42,7 @@ import butterknife.ButterKnife;
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static final int REQUEST_HOME = 0;
-
+    private static final String DIALOG_FRAGMENT_TAG = "myFragment";
     @BindView(R.id.input_email)
     EditText _emailText;
     @BindView(R.id.input_password)
@@ -59,7 +58,6 @@ public class LoginActivity extends AppCompatActivity {
     KeyStore keyStore;
     String KEY_NAME = "Secret Key";
     private SharedPreferences mSharedPreferences;
-    private static final String DIALOG_FRAGMENT_TAG = "myFragment";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -343,4 +341,8 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    public void onAuthenticated() {
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivityForResult(intent, REQUEST_HOME);
+    }
 }
