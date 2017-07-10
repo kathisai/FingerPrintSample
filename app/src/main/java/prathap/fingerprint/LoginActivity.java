@@ -97,6 +97,12 @@ public class LoginActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_HOME);
             }
         });
+
+        if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
+            // some thing wrong with finger print
+        } else {
+            showFingerPrintDialog();
+        }
     }
 
     public void login() {
@@ -135,10 +141,14 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_HOME) {
             if (resultCode == RESULT_OK) {
-
                 // TODO: Implement successful signup logic here
                 // By default we just finish the Activity and log them in automatically
-                this.finish();
+//                this.finish();
+                if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
+                    // some thing wrong with finger print
+                } else {
+                    showFingerPrintDialog();
+                }
             }
         }
     }
@@ -205,22 +215,7 @@ public class LoginActivity extends AppCompatActivity {
                         // if this button is clicked, close
                         //check fingerprint settings and store user name and password only after success auth
 
-                        FingerprintAuthenticationDialogFragment fragment
-                                = new FingerprintAuthenticationDialogFragment();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            fragment.setCryptoObject(new FingerprintManager.CryptoObject(generateCipher()));
-                        }
-                        boolean useFingerprintPreference = mSharedPreferences
-                                .getBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
-                                        true);
-                        if (useFingerprintPreference) {
-                            fragment.setStage(
-                                    FingerprintAuthenticationDialogFragment.Stage.FINGERPRINT);
-                        } else {
-                            fragment.setStage(
-                                    FingerprintAuthenticationDialogFragment.Stage.PASSWORD);
-                        }
-                        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                        showFingerPrintDialog();
 
                     }
                 })
@@ -350,7 +345,29 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onAuthenticated() {
+        // On success we are storing the user name and password
+        SharedPrefsUtils.setStringPreference(this, Constants.SP_USER_NAME, _emailText.getText().toString());
+        SharedPrefsUtils.setStringPreference(this, Constants.SP_PASSWORD_NAME, _passwordText.getText().toString());
         Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
         startActivityForResult(intent, REQUEST_HOME);
+    }
+
+    public void showFingerPrintDialog() {
+        FingerprintAuthenticationDialogFragment fragment
+                = new FingerprintAuthenticationDialogFragment();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            fragment.setCryptoObject(new FingerprintManager.CryptoObject(generateCipher()));
+        }
+        boolean useFingerprintPreference = mSharedPreferences
+                .getBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
+                        true);
+        if (useFingerprintPreference) {
+            fragment.setStage(
+                    FingerprintAuthenticationDialogFragment.Stage.FINGERPRINT);
+        } else {
+            fragment.setStage(
+                    FingerprintAuthenticationDialogFragment.Stage.PASSWORD);
+        }
+        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
     }
 }
