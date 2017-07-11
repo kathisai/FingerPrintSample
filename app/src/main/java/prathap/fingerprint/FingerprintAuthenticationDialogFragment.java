@@ -95,7 +95,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
             @Override
             public void onClick(View view) {
                 if (mStage == Stage.FINGERPRINT) {
-                    goToBackup();
+                    goToLogin();
                 } else {
                     verifyPassword();
                 }
@@ -119,7 +119,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         // If fingerprint authentication is not available, switch immediately to the backup
         // (password) screen.
         if (!mFingerprintUiHelper.isFingerprintAuthAvailable()) {
-            goToBackup();
+            goToLogin();
         }
         return v;
     }
@@ -172,6 +172,10 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
 
         // Fingerprint is not used anymore. Stop listening for it.
         mFingerprintUiHelper.stopListening();
+    }
+
+    private void goToLogin() {
+        this.dismiss();
     }
 
     /**
@@ -250,7 +254,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
 
     @Override
     public void onError() {
-        goToBackup();
+        goToLogin();
     }
 
     /**

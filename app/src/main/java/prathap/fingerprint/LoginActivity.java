@@ -140,7 +140,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_HOME) {
-            if (resultCode == RESULT_OK) {
+//            if (resultCode == RESULT_OK) {
                 // TODO: Implement successful signup logic here
                 // By default we just finish the Activity and log them in automatically
 //                this.finish();
@@ -149,7 +149,7 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     showFingerPrintDialog();
                 }
-            }
+//            }
         }
     }
 
