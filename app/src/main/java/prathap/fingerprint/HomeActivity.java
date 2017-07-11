@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class HomeActivity extends AppCompatActivity {
     @BindView(R.id.toolbar)
@@ -18,6 +19,7 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
         mToolbar.setTitle("Home Screen");
         mLogOut.setOnClickListener(new View.OnClickListener() {
