@@ -101,7 +101,8 @@ public class LoginActivity extends AppCompatActivity {
         if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
             // some thing wrong with finger print
         } else {
-            showFingerPrintDialog();
+            if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
+                showFingerPrintDialog();
         }
     }
 
@@ -141,14 +142,15 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_HOME) {
 //            if (resultCode == RESULT_OK) {
-                // TODO: Implement successful signup logic here
-                // By default we just finish the Activity and log them in automatically
+            // TODO: Implement successful signup logic here
+            // By default we just finish the Activity and log them in automatically
 //                this.finish();
-                if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
-                    // some thing wrong with finger print
-                } else {
+            if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
+                // some thing wrong with finger print
+            } else {
+                if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
                     showFingerPrintDialog();
-                }
+            }
 //            }
         }
     }
@@ -161,14 +163,17 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
-       // finish();
+        // finish();
         if (!checkFinger()) {
             Toast.makeText(this, "Finger print is not support for your device ", Toast.LENGTH_SHORT).show();
-        }else {
-            showAlerttoUser();
+        } else {
+            if (!SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false)) {
+                showAlerttoUser();
+            } else {
+                showFingerPrintDialog();
+            }
         }
     }
-
 
 
     public void onLoginFailed() {
@@ -210,20 +215,23 @@ public class LoginActivity extends AppCompatActivity {
         alertDialogBuilder
                 .setMessage("You can enable finger for simple one touch login ? ")
                 .setCancelable(false)
-                .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog,int id) {
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
                         // if this button is clicked, close
                         //check fingerprint settings and store user name and password only after success auth
-
+                        //enable the finger print flog in Shared preference
+                        SharedPrefsUtils.setBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, true);
                         showFingerPrintDialog();
 
                     }
                 })
-                .setNegativeButton("No",new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog,int id) {
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
                         // if this button is clicked, just close
                         // the dialog box and do nothing
                         dialog.cancel();
+                        // no need finger print
+                        SharedPrefsUtils.setBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false);
                         Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
                         startActivityForResult(intent, REQUEST_HOME);
                     }
@@ -236,7 +244,7 @@ public class LoginActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-    public boolean isVersionSupport(){
+    public boolean isVersionSupport() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
 
@@ -252,43 +260,42 @@ public class LoginActivity extends AppCompatActivity {
 
         try {
             // Check if the fingerprint sensor is present
-           if(isVersionSupport()) {
-               if (!fingerprintManager.isHardwareDetected()) {
-                   // Update the UI with a message
-                   Toast.makeText(this, "Fingerprint hardware not detected", Toast.LENGTH_SHORT).show();
-                   return false;
-               }
-               if (ActivityCompat.checkSelfPermission(this, Manifest.permission.USE_FINGERPRINT) != PackageManager.PERMISSION_GRANTED) {
-                   // If your app doesn't have this permission, then display the following text//
-                   Toast.makeText(this, "Please enable the fingerprint permission", Toast.LENGTH_SHORT).show();
-                   return false;
-               }
+            if (isVersionSupport()) {
+                if (!fingerprintManager.isHardwareDetected()) {
+                    // Update the UI with a message
+                    Toast.makeText(this, "Fingerprint hardware not detected", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.USE_FINGERPRINT) != PackageManager.PERMISSION_GRANTED) {
+                    // If your app doesn't have this permission, then display the following text//
+                    Toast.makeText(this, "Please enable the fingerprint permission", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
 
-               if (!fingerprintManager.hasEnrolledFingerprints()) {
-                   Toast.makeText(this,
-                           "Go to 'Settings -> Security -> Fingerprint' and register at least one fingerprint",
-                           Toast.LENGTH_LONG).show();
-                   return false;
-               }
+                if (!fingerprintManager.hasEnrolledFingerprints()) {
+                    Toast.makeText(this,
+                            "Go to 'Settings -> Security -> Fingerprint' and register at least one fingerprint",
+                            Toast.LENGTH_LONG).show();
+                    return false;
+                }
 
-               if (!keyguardManager.isKeyguardSecure()) {
-                   Toast.makeText(this,
-                           "Secure lock screen hasn't set up.\n"
-                                   + "Go to 'Settings -> Security -> Fingerprint' to set up a fingerprint",
-                           Toast.LENGTH_LONG).show();
-                   return false;
-               }
-           }else {
-               return false;
-           }
-        }
-        catch(SecurityException se) {
+                if (!keyguardManager.isKeyguardSecure()) {
+                    Toast.makeText(this,
+                            "Secure lock screen hasn't set up.\n"
+                                    + "Go to 'Settings -> Security -> Fingerprint' to set up a fingerprint",
+                            Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } catch (SecurityException se) {
             se.printStackTrace();
         }
         return true;
     }
 
-    private void generateKey()  {
+    private void generateKey() {
         try {
             // Get the reference to the key store
             keyStore = KeyStore.getInstance("AndroidKeyStore");
@@ -300,7 +307,7 @@ public class LoginActivity extends AppCompatActivity {
 
             keyStore.load(null);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                keyGenerator.init( new
+                keyGenerator.init(new
                         KeyGenParameterSpec.Builder(KEY_NAME,
                         KeyProperties.PURPOSE_ENCRYPT |
                                 KeyProperties.PURPOSE_DECRYPT)
@@ -312,8 +319,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             keyGenerator.generateKey();
-        }
-        catch(KeyStoreException
+        } catch (KeyStoreException
                 | NoSuchAlgorithmException
                 | NoSuchProviderException
                 | InvalidAlgorithmParameterException
@@ -323,7 +329,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private Cipher generateCipher()  {
+    private Cipher generateCipher() {
         try {
             Cipher cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
                     + KeyProperties.BLOCK_MODE_CBC + "/"
@@ -333,8 +339,7 @@ public class LoginActivity extends AppCompatActivity {
                     null);
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher;
-        }
-        catch (NoSuchAlgorithmException
+        } catch (NoSuchAlgorithmException
                 | NoSuchPaddingException
                 | InvalidKeyException
                 | UnrecoverableKeyException

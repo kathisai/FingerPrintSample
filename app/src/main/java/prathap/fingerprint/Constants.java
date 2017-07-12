@@ -7,4 +7,5 @@ package prathap.fingerprint;
 public interface Constants {
     public static final String SP_USER_NAME = "sp_username";
     public static final String SP_PASSWORD_NAME = "sp_password";
+    public static final String SP_IS_FP_ENABLE = "sp_fp_enable";
 }
