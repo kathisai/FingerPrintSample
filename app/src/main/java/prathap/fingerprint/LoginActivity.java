@@ -3,6 +3,7 @@ package prathap.fingerprint;
 import android.Manifest;
 import android.app.KeyguardManager;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,7 +25,17 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
@@ -70,7 +81,12 @@ public class LoginActivity extends AppCompatActivity {
         mToolbar.setTitle("FingerPrint Sample");
         setSupportActionBar(mToolbar);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if(RootUtil.isDeviceRooted()){
+            // what if device rooted
+            // delete the stored content
+            deleteInternalFile();
 
+        }
         if (checkFinger()) {
             // We are ready to set up the cipher and the key
             try {
@@ -98,12 +114,27 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
-            // some thing wrong with finger print
-        } else {
-            if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
-                showFingerPrintDialog();
+        try {
+            JSONObject account_details = new JSONObject(readFromFile());
+            if (account_details.get("user_name")  == null && account_details.get("pass_word") == null) {
+                // some thing wrong with finger print
+            } else {
+                if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
+                    showFingerPrintDialog();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
+
+
+    }
+
+    private void deleteInternalFile() {
+        String path = getFilesDir().getAbsolutePath() + "/" + "config.txt";
+        File file = new File(path);
+                if(file.exists()){
+                    file.delete();
+                }
     }
 
     public void login() {
@@ -145,12 +176,26 @@ public class LoginActivity extends AppCompatActivity {
             // TODO: Implement successful signup logic here
             // By default we just finish the Activity and log them in automatically
 //                this.finish();
-            if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
-                // some thing wrong with finger print
-            } else {
-                if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
-                    showFingerPrintDialog();
+            try {
+                JSONObject account_details = new JSONObject(readFromFile());
+                if (account_details.get("user_name")  == null && account_details.get("pass_word") == null) {
+                    // some thing wrong with finger print
+                } else {
+                    if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
+                        showFingerPrintDialog();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
+
+
+
+//            if (SharedPrefsUtils.getStringPreference(this, Constants.SP_USER_NAME) == null && SharedPrefsUtils.getStringPreference(this, Constants.SP_PASSWORD_NAME) == null) {
+//                // some thing wrong with finger print
+//            } else {
+//                if (SharedPrefsUtils.getBooleanPreference(LoginActivity.this, Constants.SP_IS_FP_ENABLE, false))
+//                    showFingerPrintDialog();
+//            }
 //            }
         }
     }
@@ -351,8 +396,18 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onAuthenticated() {
         // On success we are storing the user name and password
-        SharedPrefsUtils.setStringPreference(this, Constants.SP_USER_NAME, _emailText.getText().toString());
-        SharedPrefsUtils.setStringPreference(this, Constants.SP_PASSWORD_NAME, _passwordText.getText().toString());
+//        SharedPrefsUtils.setStringPreference(this, Constants.SP_USER_NAME, _emailText.getText().toString());
+//        SharedPrefsUtils.setStringPreference(this, Constants.SP_PASSWORD_NAME, _passwordText.getText().toString());
+        JSONObject accountObject = new JSONObject();
+
+        try {
+            accountObject.put("user_name",_emailText.getText().toString() );
+            accountObject.put("pass_word",  _passwordText.getText().toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        writeToFile(accountObject.toString());
+
         Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
         startActivityForResult(intent, REQUEST_HOME);
     }
@@ -374,5 +429,48 @@ public class LoginActivity extends AppCompatActivity {
                     FingerprintAuthenticationDialogFragment.Stage.PASSWORD);
         }
         fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+    }
+
+
+    private void writeToFile(String data) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput("config.txt", Context.MODE_PRIVATE));
+            outputStreamWriter.write(data);
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
+
+
+    private String readFromFile() {
+
+        String ret = "";
+
+        try {
+            InputStream inputStream = openFileInput("config.txt");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+        return ret;
     }
 }
